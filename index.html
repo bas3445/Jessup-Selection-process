@@ -249,7 +249,7 @@
             🚨 STRICT ZERO-TOLERANCE POLICY: Leaving or switching tabs/windows during the examination will immediately BLOCK your attempt permanently.
         </div>
 
-        <button class="btn-action" onclick="initiateExam()">Begin Selection Assessment</button>
+        <button type="button" class="btn-action" onclick="initiateExam()">Begin Selection Assessment</button>
     </div>
 
     <!-- STAGE 2: EXAMINATION PORTAL -->
@@ -260,7 +260,7 @@
         </div>
 
         <div class="content-body">
-            <form id="jessupExamForm">
+            <form id="jessupExamForm" onsubmit="return false;">
                 <div class="section-title">Section I: Advanced Jurisprudential & Customary Law Test</div>
                 
                 <!-- Q1 -->
@@ -378,8 +378,8 @@
 </div>
 
 <script>
-    // ضع رابط الـ Web App الخاص بك من Google Apps Script هنا بين القوسين
-    const GOOGLE_SCRIPT_URL = https://script.google.com/macros/s/AKfycbzMZbi6XRZyJ_W3ijFB0UFDQjeduBlglxqcxKTQTGbN037qLkWjuPRbGNnZkLfjAlG7bA/exec";
+    // تم تصحيح علامة التنصيص المفقودة هنا
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzMZbi6XRZyJ_W3ijFB0UFDQjeduBlglxqcxKTQTGbN037qLkWjuPRbGNnZkLfjAlG7bA/exec";
 
     let remainingTime = 30 * 60; // 30 mins
     let clockInterval = null;
@@ -437,7 +437,7 @@
         });
     }
 
-    // رصد مغادرة الصفحة أو فتح تبويب جديد
+    // رصد مغادرة الصفحة أو فتح تبويب جديد (يعمل فقط أثناء الاختبار)
     document.addEventListener("visibilitychange", function() {
         if (document.hidden && isExamActive) triggerInstantBlock();
     });

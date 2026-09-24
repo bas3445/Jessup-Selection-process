@@ -244,7 +244,7 @@
         <div class="scheduled-box">
             <h2 id="scheduledHeader" style="color: var(--navy-primary); margin-top: 0;">ASSESSMENT PORTAL SCHEDULED</h2>
             <p id="scheduledMessage" style="color: #475569; font-size: 1.05rem;">
-                The selection portal opens today at <b>9:00 PM</b> and closes at <b>9:30 PM</b>.
+                The selection portal opens today at <b>8:55 PM</b> and closes at <b>9:30 PM</b>.
             </p>
             <div style="margin-top: 25px; font-size: 1.1rem; font-weight: 700; color: var(--gold-accent);">
                 Status: <span id="portalCountdownDisplay">Calculating remaining time...</span>
@@ -399,9 +399,9 @@
 <script>
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzMZbi6XRZyJ_W3ijFB0UFDQjeduBlglxqcxKTQTGbN037qLkWjuPRbGNnZkLfjAlG7bA/exec";
 
-    // ضبط مواعيد الامتحان اليوم تلقائياً
+    // ضبط بداية الفتح الساعة 8:55 مساءً والإغلاق 9:30 مساءً
     const now = new Date();
-    const START_TIME = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 21, 0, 0); // 9:00 PM
+    const START_TIME = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 20, 55, 0); // 8:55 PM
     const END_TIME   = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 21, 30, 0); // 9:30 PM
 
     let remainingTime = 30 * 60;
@@ -429,7 +429,6 @@
             initiateExam();
         });
 
-        // تشغيل فحص الموعد التلقائي
         checkPortalSchedule();
         scheduleInterval = setInterval(checkPortalSchedule, 1000);
     });
@@ -440,7 +439,6 @@
         const currentTime = new Date();
 
         if (currentTime < START_TIME) {
-            // ما قبل الساعة 9:00 مساءً
             const diffSecs = Math.floor((START_TIME - currentTime) / 1000);
             const hrs = Math.floor(diffSecs / 3600);
             const mins = Math.floor((diffSecs % 3600) / 60);
@@ -452,12 +450,10 @@
                 `Portal Opens In: ${hrs > 0 ? hrs + 'h ' : ''}${mins}m ${secs < 10 ? '0' : ''}${secs}s`;
         } 
         else if (currentTime >= START_TIME && currentTime <= END_TIME) {
-            // الفترة المتاحة: 9:00 حتى 9:30 مساءً
             document.getElementById('stage-scheduled').classList.add('hidden');
             document.getElementById('stage-registration').classList.remove('hidden');
         } 
         else {
-            // ما بعد الساعة 9:30 مساءً
             document.getElementById('stage-scheduled').classList.remove('hidden');
             document.getElementById('stage-registration').classList.add('hidden');
             document.getElementById('scheduledHeader').innerText = "PORTAL CLOSED";
@@ -538,7 +534,7 @@
         document.getElementById('stage-exam').classList.remove('hidden');
 
         isExamActive = true;
-        clearInterval(scheduleInterval); // إيقاف فحص الموعد أثناء أداء الامتحان
+        clearInterval(scheduleInterval);
         clockInterval = setInterval(runClock, 1000);
     }
 
@@ -608,9 +604,9 @@ Status: ${candidateInfo.status}
 ESSAY 1: ${candidateInfo.answers.essay1}
 ESSAY 2: ${candidateInfo.answers.essay2}`;
 
-        const blob = new Blob altered = { type: 'text/plain;charset=utf-8' };
+        const blob = new Blob([fileData], { type: 'text/plain;charset=utf-8' });
         const a = document.createElement('a');
-        a.href = URL.createObjectURL(new Blob([fileData], { type: 'text/plain;charset=utf-8' }));
+        a.href = URL.createObjectURL(blob);
         a.download = `Jessup_Transcript_${candidateInfo.name.replace(/\s+/g, '_')}.txt`;
         a.click();
     }

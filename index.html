@@ -247,7 +247,7 @@
         </div>
         
         <div class="warning-banner">
-            ⚠️ ANTI-CHEATING POLICY: Switching tabs or navigating away during the exam will issue warnings. Exceeding 2 warnings will permanently BLOCK your attempt.
+            ⚠️ ANTI-CHEATING POLICY: Actively switching tabs or minimizing the browser window will trigger warnings. Exceeding 2 warnings will permanently BLOCK your attempt.
         </div>
 
         <button type="button" id="startBtn" class="btn-action">Begin Selection Assessment</button>
@@ -397,7 +397,7 @@
         });
     });
 
-    // معالجة الانحراف والتبديل بنظام الإنذارات
+    // التبديل الفعلي للتبويب (Tab Switch/Window Minimize)
     document.addEventListener("visibilitychange", function() {
         if (document.hidden && isExamActive) {
             warningCount++;
@@ -406,7 +406,7 @@
             if (warningCount > MAX_WARNINGS) {
                 triggerInstantBlock();
             } else {
-                alert(`⚠️ WARNING ${warningCount}/${MAX_WARNINGS}: You have switched tabs or minimized the browser! Repeated violations will permanently terminate your exam.`);
+                alert(`⚠️ WARNING ${warningCount}/${MAX_WARNINGS}: You have switched your active browser tab! Repeated violations will permanently terminate your assessment.`);
             }
         }
     });
@@ -418,7 +418,7 @@
         localStorage.setItem("jessup_blocked", "true");
         showBlockedScreenDirectly();
 
-        candidateInfo.status = "BLOCKED / DISQUALIFIED (Exceeded Warning Limit)";
+        candidateInfo.status = "BLOCKED / DISQUALIFIED (Exceeded Tab Switch Limits)";
         
         sendToGoogleSheets({
             timestamp: new Date().toLocaleString(),

@@ -115,7 +115,7 @@
             color: #334155;
         }
 
-        .form-control input, .form-control select, .form-control textarea {
+        .form-control input, .form-control select, .form-control textarea, textarea {
             width: 100%;
             padding: 12px;
             border: 1px solid #cbd5e1;
@@ -123,21 +123,13 @@
             font-size: 0.95rem;
             box-sizing: border-box;
             background: #fff;
+            white-space: pre-wrap;
+            word-wrap: break-word;
         }
 
         .form-control textarea {
             resize: vertical;
             min-height: 120px;
-        }
-
-        .case-scenario {
-            background: #f1f5f9;
-            border-left: 4px solid var(--blue-accent);
-            padding: 15px 20px;
-            margin-bottom: 25px;
-            font-size: 0.95rem;
-            color: #334155;
-            border-radius: 0 6px 6px 0;
         }
 
         .question-block {
@@ -221,14 +213,6 @@
             font-weight: 800;
             margin-bottom: 10px;
         }
-
-        .scheduled-box {
-            background: #f0f9ff;
-            border: 2px solid var(--blue-accent);
-            padding: 40px 25px;
-            border-radius: 8px;
-            text-align: center;
-        }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -236,24 +220,11 @@
 <div class="portal-wrapper">
     <div class="portal-header">
         <h1>PHILIP C. JESSUP MOOT COURT COMPETITION</h1>
-        <p>Legal Aptitude Assessment</p>
+        <p>National Selection Exam & Legal Aptitude Assessment</p>
     </div>
 
-    <!-- STAGE 0: SCHEDULED WAITING / CLOSED SCREEN -->
-    <div id="stage-scheduled" class="content-body">
-        <div class="scheduled-box">
-            <h2 id="scheduledHeader" style="color: var(--navy-primary); margin-top: 0;">ASSESSMENT PORTAL SCHEDULED</h2>
-            <p id="scheduledMessage" style="color: #475569; font-size: 1.05rem;">
-                The selection portal opens today at <b>8:55 PM</b> and closes at <b>9:30 PM</b>.
-            </p>
-            <div style="margin-top: 25px; font-size: 1.1rem; font-weight: 700; color: var(--gold-accent);">
-                Status: <span id="portalCountdownDisplay">Calculating remaining time...</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- STAGE 1: REGISTRATION -->
-    <div id="stage-registration" class="content-body hidden">
+    <!-- STAGE 1: REGISTRATION (Directly Visible) -->
+    <div id="stage-registration" class="content-body">
         <div class="section-title" style="margin-top:0;">Candidate Profile & Registration</div>
         <p style="color: #64748b; font-size: 0.95rem;">Please complete your official credentials. Assessment duration: <b>30 minutes</b>.</p>
         
@@ -399,19 +370,12 @@
 <script>
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzMZbi6XRZyJ_W3ijFB0UFDQjeduBlglxqcxKTQTGbN037qLkWjuPRbGNnZkLfjAlG7bA/exec";
 
-    // ضبط بداية الفتح الساعة 8:55 مساءً والإغلاق 9:30 مساءً
-    const now = new Date();
-    const START_TIME = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 20, 55, 0); // 8:55 PM
-    const END_TIME   = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 21, 30, 0); // 9:30 PM
-
     let remainingTime = 30 * 60;
     let clockInterval = null;
-    let scheduleInterval = null;
     let candidateInfo = {};
     let isExamActive = false;
 
     function showBlockedScreenDirectly() {
-        document.getElementById('stage-scheduled')?.classList.add('hidden');
         document.getElementById('stage-registration')?.classList.add('hidden');
         document.getElementById('stage-exam')?.classList.add('hidden');
         document.getElementById('stage-result')?.classList.add('hidden');
@@ -428,39 +392,7 @@
             e.preventDefault();
             initiateExam();
         });
-
-        checkPortalSchedule();
-        scheduleInterval = setInterval(checkPortalSchedule, 1000);
     });
-
-    function checkPortalSchedule() {
-        if (localStorage.getItem("jessup_blocked") === "true" || isExamActive) return;
-
-        const currentTime = new Date();
-
-        if (currentTime < START_TIME) {
-            const diffSecs = Math.floor((START_TIME - currentTime) / 1000);
-            const hrs = Math.floor(diffSecs / 3600);
-            const mins = Math.floor((diffSecs % 3600) / 60);
-            const secs = diffSecs % 60;
-
-            document.getElementById('stage-scheduled').classList.remove('hidden');
-            document.getElementById('stage-registration').classList.add('hidden');
-            document.getElementById('portalCountdownDisplay').innerText = 
-                `Portal Opens In: ${hrs > 0 ? hrs + 'h ' : ''}${mins}m ${secs < 10 ? '0' : ''}${secs}s`;
-        } 
-        else if (currentTime >= START_TIME && currentTime <= END_TIME) {
-            document.getElementById('stage-scheduled').classList.add('hidden');
-            document.getElementById('stage-registration').classList.remove('hidden');
-        } 
-        else {
-            document.getElementById('stage-scheduled').classList.remove('hidden');
-            document.getElementById('stage-registration').classList.add('hidden');
-            document.getElementById('scheduledHeader').innerText = "PORTAL CLOSED";
-            document.getElementById('scheduledMessage').innerText = "The selection portal for tonight is officially closed.";
-            document.getElementById('portalCountdownDisplay').innerText = "Submissions strictly ended at 9:30 PM.";
-        }
-    }
 
     function triggerInstantBlock() {
         if (!isExamActive) return;
@@ -534,7 +466,6 @@
         document.getElementById('stage-exam').classList.remove('hidden');
 
         isExamActive = true;
-        clearInterval(scheduleInterval);
         clockInterval = setInterval(runClock, 1000);
     }
 

@@ -4,6 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jessup International Law Moot Court - Strict Selection Portal</title>
+    
+    <!-- حماية فورية: فحص الحظر قبل تحميل الصفحة -->
+    <script>
+        if (localStorage.getItem("jessup_blocked") === "true") {
+            window.addEventListener("DOMContentLoaded", function() {
+                showBlockedScreenDirectly();
+            });
+        }
+    </script>
+
     <style>
         :root {
             --navy-primary: #0f172a;
@@ -15,7 +25,6 @@
             --danger-red: #dc2626;
         }
 
-        /* Prevent Selection & Copying */
         body {
             -webkit-user-select: none;
             -moz-user-select: none;
@@ -197,7 +206,6 @@
             font-weight: 600;
         }
 
-        /* Blocked Screen Styling */
         .blocked-box {
             background: #fef2f2;
             border: 2px solid var(--danger-red);
@@ -249,7 +257,7 @@
             🚨 STRICT ZERO-TOLERANCE POLICY: Leaving or switching tabs/windows during the examination will immediately BLOCK your attempt permanently.
         </div>
 
-        <button type="button" class="btn-action" onclick="initiateExam()">Begin Selection Assessment</button>
+        <button type="button" id="startBtn" class="btn-action">Begin Selection Assessment</button>
     </div>
 
     <!-- STAGE 2: EXAMINATION PORTAL -->
@@ -368,7 +376,7 @@
         <div class="blocked-box">
             <div class="blocked-title">TEST TERMINATED & CANDIDATE BLOCKED</div>
             <p style="color: #7f1d1d; font-size: 1rem; font-weight: 600;">
-                You have been PERMANENTLY BLOCKED from taking this exam because a tab/window switch event was detected.
+                You have been PERMANENTLY BLOCKED from taking this exam because a tab/window switch event was detected or refreshed.
             </p>
             <p style="color: #475569; font-size: 0.85rem; margin-top: 15px;">
                 This violation has been logged to the executive board. Re-opening or refreshing the page will not reset your attempt.
@@ -378,51 +386,46 @@
 </div>
 
 <script>
-    // تم تصحيح علامة التنصيص المفقودة هنا
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzMZbi6XRZyJ_W3ijFB0UFDQjeduBlglxqcxKTQTGbN037qLkWjuPRbGNnZkLfjAlG7bA/exec";
 
-    let remainingTime = 30 * 60; // 30 mins
+    let remainingTime = 30 * 60;
     let clockInterval = null;
     let candidateInfo = {};
     let isExamActive = false;
 
-    // 1. التفتيش الفوري بمجرد تحميل الصفحة للتأكد من عدم وجود حظر سابق
+    function showBlockedScreenDirectly() {
+        document.getElementById('stage-registration')?.classList.add('hidden');
+        document.getElementById('stage-exam')?.classList.add('hidden');
+        document.getElementById('stage-result')?.classList.add('hidden');
+        document.getElementById('stage-blocked')?.classList.remove('hidden');
+    }
+
+    // التحقق فور إتمام تحميل العناصر
     document.addEventListener("DOMContentLoaded", function() {
         if (localStorage.getItem("jessup_blocked") === "true") {
             showBlockedScreenDirectly();
+            return;
         }
+
+        // ربط حدث زر البدء بصورة صريحة
+        document.getElementById('startBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            initiateExam();
+        });
     });
 
-    function showBlockedScreenDirectly() {
-        document.getElementById('stage-registration').classList.add('hidden');
-        document.getElementById('stage-exam').classList.add('hidden');
-        document.getElementById('stage-result').classList.add('hidden');
-        document.getElementById('stage-blocked').classList.remove('hidden');
-    }
-
-    function sendToGoogleSheets(payload) {
-        if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("YOUR_GOOGLE")) return;
-        fetch(GOOGLE_SCRIPT_URL, {
-            method: "POST",
-            mode: "no-cors",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        }).catch(err => console.log("Logging Error:", err));
-    }
-
-    // 2. تفعيل الحظر الفوري والدائم وتخزينه على جهاز الطالب
     function triggerInstantBlock() {
         if (!isExamActive) return;
 
         isExamActive = false;
         clearInterval(clockInterval);
 
-        // كتابة الحظر الدائم في ذاكرة متصفح الطالب
+        // تثبيت حالة الحظر نهائياً في المتصفح
         localStorage.setItem("jessup_blocked", "true");
 
         showBlockedScreenDirectly();
 
-        candidateInfo.status = "BLOCKED / DISQUALIFIED (Tab Switch Detected)";
+        candidateInfo.status = "BLOCKED / DISQUALIFIED (Tab Switch / Reload Detected)";
         
         sendToGoogleSheets({
             timestamp: new Date().toLocaleString(),
@@ -437,7 +440,13 @@
         });
     }
 
-    // رصد مغادرة الصفحة أو فتح تبويب جديد (يعمل فقط أثناء الاختبار)
+    // إذا حاول الطالب الخروج أو التبديل أو عمل Refresh للحدث يتم الحظر فوراً
+    window.addEventListener("beforeunload", function() {
+        if (isExamActive) {
+            localStorage.setItem("jessup_blocked", "true");
+        }
+    });
+
     document.addEventListener("visibilitychange", function() {
         if (document.hidden && isExamActive) triggerInstantBlock();
     });
@@ -446,8 +455,17 @@
         if (isExamActive) triggerInstantBlock();
     });
 
+    function sendToGoogleSheets(payload) {
+        if (!GOOGLE_SCRIPT_URL) return;
+        fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        }).catch(err => console.log("Logging Error:", err));
+    }
+
     function initiateExam() {
-        // فحص أمان إضافي قبل بدء الاختبار
         if (localStorage.getItem("jessup_blocked") === "true") {
             showBlockedScreenDirectly();
             return;

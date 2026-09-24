@@ -223,7 +223,7 @@
         <p>National Selection Exam & Legal Aptitude Assessment</p>
     </div>
 
-    <!-- STAGE 1: REGISTRATION (Directly Visible) -->
+    <!-- STAGE 1: REGISTRATION -->
     <div id="stage-registration" class="content-body">
         <div class="section-title" style="margin-top:0;">Candidate Profile & Registration</div>
         <p style="color: #64748b; font-size: 0.95rem;">Please complete your official credentials. Assessment duration: <b>30 minutes</b>.</p>
@@ -247,7 +247,7 @@
         </div>
         
         <div class="warning-banner">
-            🚨 STRICT ZERO-TOLERANCE POLICY: Leaving or switching tabs/windows during the examination will immediately BLOCK your attempt permanently.
+            ⚠️ ANTI-CHEATING POLICY: Switching tabs or navigating away during the exam will issue warnings. Exceeding 2 warnings will permanently BLOCK your attempt.
         </div>
 
         <button type="button" id="startBtn" class="btn-action">Begin Selection Assessment</button>
@@ -257,6 +257,7 @@
     <div id="stage-exam" class="hidden">
         <div class="status-bar">
             <span>Candidate: <span id="candidateDisplay">--</span></span>
+            <span style="color: var(--danger-red);">Warnings: <span id="warningCounter">0 / 2</span></span>
             <span class="timer-display">Time Left: <span id="timeClock">30:00</span></span>
         </div>
 
@@ -353,12 +354,12 @@
         <button class="btn-action" onclick="generateTranscript()">Download Official Transcript (.TXT)</button>
     </div>
 
-    <!-- STAGE 4: INSTANT & PERMANENT BLOCKED SCREEN -->
+    <!-- STAGE 4: BLOCKED SCREEN -->
     <div id="stage-blocked" class="content-body hidden">
         <div class="blocked-box">
             <div class="blocked-title">TEST TERMINATED & CANDIDATE BLOCKED</div>
             <p style="color: #7f1d1d; font-size: 1rem; font-weight: 600;">
-                You have been PERMANENTLY BLOCKED from taking this exam because a tab/window switch event was detected or refreshed.
+                You have been PERMANENTLY BLOCKED for repeatedly leaving the examination tab (Exceeded maximum allowed warnings).
             </p>
             <p style="color: #475569; font-size: 0.85rem; margin-top: 15px;">
                 This violation has been logged to the executive board. Re-opening or refreshing the page will not reset your attempt.
@@ -374,6 +375,8 @@
     let clockInterval = null;
     let candidateInfo = {};
     let isExamActive = false;
+    let warningCount = 0;
+    const MAX_WARNINGS = 2;
 
     function showBlockedScreenDirectly() {
         document.getElementById('stage-registration')?.classList.add('hidden');
@@ -394,16 +397,28 @@
         });
     });
 
-    function triggerInstantBlock() {
-        if (!isExamActive) return;
+    // معالجة الانحراف والتبديل بنظام الإنذارات
+    document.addEventListener("visibilitychange", function() {
+        if (document.hidden && isExamActive) {
+            warningCount++;
+            document.getElementById('warningCounter').innerText = `${warningCount} / ${MAX_WARNINGS}`;
 
+            if (warningCount > MAX_WARNINGS) {
+                triggerInstantBlock();
+            } else {
+                alert(`⚠️ WARNING ${warningCount}/${MAX_WARNINGS}: You have switched tabs or minimized the browser! Repeated violations will permanently terminate your exam.`);
+            }
+        }
+    });
+
+    function triggerInstantBlock() {
         isExamActive = false;
         clearInterval(clockInterval);
 
         localStorage.setItem("jessup_blocked", "true");
         showBlockedScreenDirectly();
 
-        candidateInfo.status = "BLOCKED / DISQUALIFIED (Tab Switch / Reload Detected)";
+        candidateInfo.status = "BLOCKED / DISQUALIFIED (Exceeded Warning Limit)";
         
         sendToGoogleSheets({
             timestamp: new Date().toLocaleString(),
@@ -422,14 +437,6 @@
         if (isExamActive) {
             localStorage.setItem("jessup_blocked", "true");
         }
-    });
-
-    document.addEventListener("visibilitychange", function() {
-        if (document.hidden && isExamActive) triggerInstantBlock();
-    });
-
-    window.addEventListener("blur", function() {
-        if (isExamActive) triggerInstantBlock();
     });
 
     function sendToGoogleSheets(payload) {
